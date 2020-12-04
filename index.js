@@ -1,7 +1,7 @@
 const http = require('http');
 const EventEmitter = require('events');
 
-class Koa extends EventEmitter{
+class Koa extends EventEmitter {
     constructor() {
         super();
         this.middlewares = [];
@@ -15,23 +15,23 @@ class Koa extends EventEmitter{
     }
     createContent(req, res) {
         let context = Object.create(this.content);
-        content.req = req;
-        content.res = res;
-        content.app = this;
+        context.req = req;
+        context.res = res;
+        context.app = this;
         return context;
     }
     compose() {
-        return async (ctx) => {
-            const length = this.middlewares.length;
+        return async(ctx) => {
+            let length = this.middlewares.length;
             let handleMiddleware = (fn, next) => {
                 return async() => await fn(ctx, next);
             }
-            let next = () => {return new Promise((resolve) => resolve())};
-            while(length>=0) {
+            let next = () => { return new Promise((resolve) => resolve()) };
+            while (length >= 0) {
                 next = handleMiddleware(this.middlewares[length], next);
                 length--;
             }
-            next();
+            return next();
         }
     }
     onError(err, ctx) {
@@ -47,14 +47,14 @@ class Koa extends EventEmitter{
     }
     cb() {
         return (req, res) => {
-            let ctx = createContent(req, res);
+            let ctx = this.createContent(req, res);
             let compose = this.compose();
             return this.request(ctx, compose);
         }
     }
     listen(...args) {
-        let server =  http.creatServer(this.cb());
+        let server = http.createServer(this.cb());
         server.listen(...args);
-    } 
+    }
 }
 module.exports = Koa;
